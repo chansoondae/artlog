@@ -104,9 +104,14 @@ export function LoginButtons() {
 
   return (
     <div className="flex flex-col gap-4 w-full max-w-xs">
-      <Button type="button" onClick={handleGoogle} disabled={loading} variant="outline" className="w-full h-12 text-base">
+      <button
+        type="button"
+        onClick={() => { console.log("[Auth] 버튼 클릭됨"); handleGoogle(); }}
+        disabled={loading}
+        className="w-full h-12 rounded-lg border border-zinc-300 bg-white text-sm font-medium text-zinc-900"
+      >
         {loading ? "로그인 중..." : "구글로 시작하기"}
-      </Button>
+      </button>
 
       {!showNicknameInput ? (
         <Button
