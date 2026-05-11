@@ -1,10 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   GoogleAuthProvider,
   signInWithPopup,
+  signInWithRedirect,
+  getRedirectResult,
   signInAnonymously,
   updateProfile,
 } from "firebase/auth";
@@ -14,6 +16,10 @@ import { COLLECTIONS } from "@/lib/constants";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
+
+function isMobile() {
+  return /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+}
 
 export function LoginButtons() {
   const router = useRouter();
@@ -29,18 +35,40 @@ export function LoginButtons() {
     );
   }
 
+  // redirect 후 돌아왔을 때 결과 처리
+  useEffect(() => {
+    setLoading(true);
+    getRedirectResult(auth)
+      .then(async (result) => {
+        if (!result) return;
+        const { uid, displayName, photoURL } = result.user;
+        await upsertUser(uid, displayName ?? "사용자", photoURL);
+        router.replace("/");
+      })
+      .catch((e) => {
+        console.error(e);
+        toast.error("구글 로그인에 실패했습니다.");
+      })
+      .finally(() => setLoading(false));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   async function handleGoogle() {
     setLoading(true);
+    const provider = new GoogleAuthProvider();
     try {
-      const provider = new GoogleAuthProvider();
-      const result = await signInWithPopup(auth, provider);
-      const { uid, displayName, photoURL } = result.user;
-      await upsertUser(uid, displayName ?? "사용자", photoURL);
-      router.replace("/");
+      if (isMobile()) {
+        await signInWithRedirect(auth, provider);
+        // redirect 후 페이지가 떠나므로 이후 코드 실행 안 됨
+      } else {
+        const result = await signInWithPopup(auth, provider);
+        const { uid, displayName, photoURL } = result.user;
+        await upsertUser(uid, displayName ?? "사용자", photoURL);
+        router.replace("/");
+      }
     } catch (e) {
       toast.error("구글 로그인에 실패했습니다.");
       console.error(e);
-    } finally {
       setLoading(false);
     }
   }
@@ -67,7 +95,7 @@ export function LoginButtons() {
   return (
     <div className="flex flex-col gap-4 w-full max-w-xs">
       <Button onClick={handleGoogle} disabled={loading} variant="outline" className="w-full h-12 text-base">
-        구글로 시작하기
+        {loading ? "로그인 중..." : "구글로 시작하기"}
       </Button>
 
       {!showNicknameInput ? (
