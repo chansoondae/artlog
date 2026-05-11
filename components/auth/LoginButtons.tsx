@@ -58,7 +58,6 @@ export function LoginButtons() {
     try {
       if (isMobile()) {
         await signInWithRedirect(auth, provider);
-        // redirect 후 페이지가 떠나므로 이후 코드 실행 안 됨
       } else {
         const result = await signInWithPopup(auth, provider);
         const { uid, displayName, photoURL } = result.user;
@@ -68,6 +67,7 @@ export function LoginButtons() {
     } catch (e) {
       toast.error("구글 로그인에 실패했습니다.");
       console.error(e);
+    } finally {
       setLoading(false);
     }
   }

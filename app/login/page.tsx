@@ -1,6 +1,23 @@
+"use client";
+
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/components/auth/AuthProvider";
 import { LoginButtons } from "@/components/auth/LoginButtons";
 
 export default function LoginPage() {
+  const { user, loading } = useAuth();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!loading && user) {
+      router.replace("/");
+    }
+  }, [user, loading, router]);
+
+  // 로그인 상태 확인 중이거나 이미 로그인됐으면 빈 화면
+  if (loading || user) return null;
+
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-zinc-50 dark:bg-black px-6">
       <div className="flex flex-col items-center gap-8 w-full max-w-xs">
