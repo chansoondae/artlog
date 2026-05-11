@@ -104,7 +104,7 @@ export function LoginButtons() {
 
   return (
     <div className="flex flex-col gap-4 w-full max-w-xs">
-      <Button onClick={handleGoogle} disabled={loading} variant="outline" className="w-full h-12 text-base">
+      <Button type="button" onClick={handleGoogle} disabled={loading} variant="outline" className="w-full h-12 text-base">
         {loading ? "로그인 중..." : "구글로 시작하기"}
       </Button>
 
