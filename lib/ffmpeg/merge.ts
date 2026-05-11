@@ -20,12 +20,16 @@ export async function mergeClips(
 
   const n = inputs.length;
 
-  // 폰트 로드 (NotoSansKR 서브셋)
-  const fontRes = await fetch("https://fonts.gstatic.com/s/notosanskr/v36/PbyxFmXiEBPT4ITbgNA5Cgm20xz64px_1hVWr0wuPNGmlQNMEfD4.0.woff2");
-  if (fontRes.ok) {
-    const fontBuf = await fontRes.arrayBuffer();
-    await ff.writeFile("font.ttf", new Uint8Array(fontBuf));
-  }
+  // 폰트 로드 시도 (실패해도 계속)
+  let hasFontFile = false;
+  try {
+    const fontRes = await fetch("/NotoSansKR.ttf");
+    if (fontRes.ok) {
+      const fontBuf = await fontRes.arrayBuffer();
+      await ff.writeFile("font.ttf", new Uint8Array(fontBuf));
+      hasFontFile = true;
+    }
+  } catch {}
 
   // 각 클립 다운로드
   for (let i = 0; i < n; i++) {
@@ -38,25 +42,21 @@ export async function mergeClips(
 
   const { cols, w, h } = getGrid(n);
 
-  // scale + drawtext 필터
-  const hasFontFile = fontRes.ok;
   const filterInputs = inputs
     .map((inp, i) => {
-      const name = inp.authorName.replace(/'/g, "");
-      const caption = (inp.caption ?? "").replace(/'/g, "");
       const fontSize = Math.max(10, Math.floor(w / 12));
-      const fontFile = hasFontFile ? `:fontfile=font.ttf` : "";
 
-      const nameText = `drawtext=text='${name}'${fontFile}:fontcolor=white:fontsize=${fontSize}:x=8:y=h-${fontSize * 2 + 10}:shadowcolor=black:shadowx=1:shadowy=1`;
-      const captionText = caption
-        ? `drawtext=text='${caption}'${fontFile}:fontcolor=white@0.85:fontsize=${Math.max(8, fontSize - 2)}:x=8:y=h-${fontSize + 4}:shadowcolor=black:shadowx=1:shadowy=1`
-        : "";
+      if (hasFontFile) {
+        const name = inp.authorName.replace(/[':]/g, "");
+        const caption = (inp.caption ?? "").replace(/[':]/g, "");
+        const nameText = `drawtext=text='${name}':fontfile=font.ttf:fontcolor=white:fontsize=${fontSize}:x=8:y=h-${fontSize * 2 + 10}:shadowcolor=black:shadowx=1:shadowy=1`;
+        const captionText = caption
+          ? `,drawtext=text='${caption}':fontfile=font.ttf:fontcolor=white@0.85:fontsize=${Math.max(8, fontSize - 2)}:x=8:y=h-${fontSize + 4}:shadowcolor=black:shadowx=1:shadowy=1`
+          : "";
+        return `[${i}:v]fps=30,scale=${w}:${h}:force_original_aspect_ratio=decrease,pad=${w}:${h}:(ow-iw)/2:(oh-ih)/2,${nameText}${captionText}[v${i}]`;
+      }
 
-      const textFilters = captionText
-        ? `${nameText},${captionText}`
-        : nameText;
-
-      return `[${i}:v]fps=30,scale=${w}:${h}:force_original_aspect_ratio=decrease,pad=${w}:${h}:(ow-iw)/2:(oh-ih)/2,${textFilters}[v${i}]`;
+      return `[${i}:v]fps=30,scale=${w}:${h}:force_original_aspect_ratio=decrease,pad=${w}:${h}:(ow-iw)/2:(oh-ih)/2[v${i}]`;
     })
     .join("; ");
 
