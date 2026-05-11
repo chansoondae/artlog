@@ -53,14 +53,6 @@ export function MergeButton({ logs, dayKey }: MergeButtonProps) {
     }
   }
 
-  function handleDownload() {
-    if (!resultUrl) return;
-    const a = document.createElement("a");
-    a.href = resultUrl;
-    a.download = `artlog_${dayKey}.mp4`;
-    a.click();
-  }
-
   const busy = status === "loading" || status === "merging";
 
   return (
@@ -97,13 +89,13 @@ export function MergeButton({ logs, dayKey }: MergeButtonProps) {
             className="w-full rounded-xl bg-black"
           />
           <div className="flex gap-2">
-            <button
-              type="button"
-              onClick={handleDownload}
-              className="flex-1 h-11 rounded-xl bg-zinc-900 text-white dark:bg-zinc-50 dark:text-zinc-900 text-sm font-semibold hover:opacity-90"
+            <a
+              href={resultUrl}
+              download={`artlog_${dayKey}.mp4`}
+              className="flex-1 h-11 rounded-xl bg-zinc-900 text-white dark:bg-zinc-50 dark:text-zinc-900 text-sm font-semibold hover:opacity-90 flex items-center justify-center"
             >
               ↓ 다운로드
-            </button>
+            </a>
             <button
               type="button"
               onClick={() => { setStatus("idle"); setResultUrl(null); }}
