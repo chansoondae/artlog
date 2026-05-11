@@ -63,8 +63,11 @@ export function LoginButtons() {
     setLoading(true);
     const provider = new GoogleAuthProvider();
     try {
+      console.log("[Auth] useRedirect:", useRedirect(), "hostname:", window.location.hostname);
       if (useRedirect()) {
+        console.log("[Auth] signInWithRedirect 호출");
         await signInWithRedirect(auth, provider);
+        console.log("[Auth] signInWithRedirect 완료 (이 줄이 보이면 redirect 안 됨)");
       } else {
         const result = await signInWithPopup(auth, provider);
         const { uid, displayName, photoURL } = result.user;
