@@ -15,8 +15,15 @@ export default function LoginPage() {
     }
   }, [user, loading, router]);
 
-  // 로그인 상태 확인 중이거나 이미 로그인됐으면 빈 화면
-  if (loading || user) return null;
+  // 이미 로그인됐으면 빈 화면 (홈으로 이동 중)
+  if (user) return null;
+
+  // 로그인 상태 확인 중
+  if (loading) return (
+    <div className="flex min-h-screen items-center justify-center bg-zinc-50 dark:bg-black">
+      <p className="text-zinc-400 text-sm">로딩 중...</p>
+    </div>
+  );
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-zinc-50 dark:bg-black px-6">
