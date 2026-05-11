@@ -39,8 +39,10 @@ export function LoginButtons() {
 
   // redirect 후 돌아왔을 때 결과 처리
   useEffect(() => {
+    console.log("[Auth] getRedirectResult 시작");
     getRedirectResult(auth)
       .then(async (result) => {
+        console.log("[Auth] getRedirectResult 결과:", result);
         if (!result) return;
         const { uid, displayName, photoURL } = result.user;
         try {
@@ -51,7 +53,7 @@ export function LoginButtons() {
         router.replace("/");
       })
       .catch((e) => {
-        console.error(e);
+        console.error("[Auth] getRedirectResult 에러:", e);
         toast.error("구글 로그인에 실패했습니다.");
       });
   // eslint-disable-next-line react-hooks/exhaustive-deps
