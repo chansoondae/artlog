@@ -50,29 +50,38 @@ export function UploadForm({ roomId, clipBlob, defaultVenue, onBack }: UploadFor
       const logRef = doc(collection(db, COLLECTIONS.rooms, roomId, SUBCOLLECTIONS.logs));
       const logId = logRef.id;
 
+      // 썸네일 먼저 추출 (Canvas, ffmpeg 불필요)
+      let thumbnailUrl: string | null = null;
+      let thumbBlob: Blob | null = null;
+      try {
+        thumbBlob = await extractThumbnail(clipBlob);
+      } catch {
+        // 실패해도 계속
+      }
+
       // 영상 업로드
       const videoPath = STORAGE_PATHS.clip(roomId, dayKey, logId);
       const videoRef = ref(storage, videoPath);
       await new Promise<void>((resolve, reject) => {
         const task = uploadBytesResumable(videoRef, clipBlob, { contentType: "video/mp4" });
         task.on("state_changed",
-          (snap) => setUploadProgress(Math.round(snap.bytesTransferred / snap.totalBytes * 80)),
+          (snap) => setUploadProgress(Math.round(snap.bytesTransferred / snap.totalBytes * (thumbBlob ? 80 : 95))),
           reject,
           () => resolve()
         );
       });
       const videoUrl = await getDownloadURL(videoRef);
 
-      // 썸네일 추출 & 업로드
-      let thumbnailUrl: string | null = null;
-      try {
-        const thumbBlob = await extractThumbnail(clipBlob);
-        const thumbPath = STORAGE_PATHS.thumb(roomId, dayKey, logId);
-        const thumbRef = ref(storage, thumbPath);
-        await uploadBytesResumable(thumbRef, thumbBlob, { contentType: "image/jpeg" });
-        thumbnailUrl = await getDownloadURL(thumbRef);
-      } catch {
-        // 썸네일 실패해도 업로드는 계속
+      // 썸네일 업로드
+      if (thumbBlob) {
+        try {
+          const thumbPath = STORAGE_PATHS.thumb(roomId, dayKey, logId);
+          const thumbRef = ref(storage, thumbPath);
+          await uploadBytesResumable(thumbRef, thumbBlob, { contentType: "image/jpeg" });
+          thumbnailUrl = await getDownloadURL(thumbRef);
+        } catch {
+          // 실패해도 계속
+        }
       }
       setUploadProgress(95);
 

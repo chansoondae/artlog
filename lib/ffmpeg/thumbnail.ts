@@ -1,24 +1,36 @@
-import { fetchFile } from "@ffmpeg/util";
-import { getFFmpeg } from "./loader";
-
+/**
+ * Canvas로 영상 첫 프레임을 JPEG으로 추출 (ffmpeg 불필요)
+ */
 export async function extractThumbnail(file: File | Blob): Promise<Blob> {
-  const ff = await getFFmpeg();
+  return new Promise((resolve, reject) => {
+    const video = document.createElement("video");
+    video.muted = true;
+    video.playsInline = true;
+    video.src = URL.createObjectURL(file);
 
-  const inputName = "thumb_input.mp4";
-  await ff.writeFile(inputName, await fetchFile(file));
+    video.onloadeddata = () => {
+      video.currentTime = 0;
+    };
 
-  await ff.exec([
-    "-i", inputName,
-    "-ss", "0",
-    "-frames:v", "1",
-    "-q:v", "2",
-    "thumb.jpg",
-  ]);
+    video.onseeked = () => {
+      try {
+        const canvas = document.createElement("canvas");
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        canvas.getContext("2d")!.drawImage(video, 0, 0);
+        URL.revokeObjectURL(video.src);
+        canvas.toBlob((blob) => {
+          if (blob) resolve(blob);
+          else reject(new Error("썸네일 추출 실패"));
+        }, "image/jpeg", 0.8);
+      } catch (e) {
+        reject(e);
+      }
+    };
 
-  const data = await ff.readFile("thumb.jpg");
-  await ff.deleteFile(inputName);
-  await ff.deleteFile("thumb.jpg");
-
-  const buffer = data instanceof Uint8Array ? data.buffer.slice(0) : data;
-  return new Blob([buffer as ArrayBuffer], { type: "image/jpeg" });
+    video.onerror = () => {
+      URL.revokeObjectURL(video.src);
+      reject(new Error("영상 로드 실패"));
+    };
+  });
 }
