@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { trimTo2Seconds } from "@/lib/ffmpeg/trim";
 import { getFFmpeg } from "@/lib/ffmpeg/loader";
+import { transcodeToH264 } from "@/lib/transcode";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 
@@ -60,13 +61,29 @@ export function VideoTrimmer({ file, onTrimmed }: VideoTrimmerProps) {
     } catch (e) {
       ff.off("log", logHandler);
       console.error(e);
-      setStatus("ready");
 
-      // HEVC 감지
-      const detail = lastLog.includes("hevc") || lastLog.includes("hvc1")
-        ? "HEVC(H.265) 영상은 지원하지 않습니다. 설정 → 카메라 → 포맷을 '가장 호환성 높은'으로 변경 후 촬영해주세요."
-        : lastLog || String(e);
-      setErrorDetail(detail);
+      // HEVC 등 미지원 코덱 → Canvas 폴백
+      const isCodecError = lastLog.includes("hevc") || lastLog.includes("hvc1")
+        || lastLog.includes("Invalid argument") || lastLog.includes("Decoder");
+
+      if (isCodecError) {
+        setErrorDetail("HEVC 영상 감지 — 브라우저 방식으로 재시도 중...");
+        try {
+          const blob = await transcodeToH264(file, startSec, 2, (p) => setProgress(p));
+          setErrorDetail(null);
+          setStatus("done");
+          setProgress(100);
+          onTrimmed(blob);
+          return;
+        } catch (e2) {
+          console.error(e2);
+          setErrorDetail("변환에 실패했습니다. 설정 → 카메라 → 포맷을 '가장 호환성 높은'으로 변경 후 촬영해주세요.");
+        }
+      } else {
+        setErrorDetail(lastLog || String(e));
+      }
+
+      setStatus("ready");
       toast.error("트리밍에 실패했습니다.");
     }
   }
