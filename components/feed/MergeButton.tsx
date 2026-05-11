@@ -36,7 +36,7 @@ export function MergeButton({ logs, dayKey }: MergeButtonProps) {
 
     try {
       const blob = await mergeClips(
-        logs.map((l) => ({ url: l.videoUrl, authorName: l.authorName })),
+        logs.map((l) => ({ url: l.videoUrl, authorName: l.authorName, caption: l.caption })),
         (p) => {
           setStatus("merging");
           setProgress(p);
