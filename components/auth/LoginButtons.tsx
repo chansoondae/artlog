@@ -40,9 +40,12 @@ export function LoginButtons() {
     getRedirectResult(auth)
       .then(async (result) => {
         if (!result) return;
-        setLoading(true);
         const { uid, displayName, photoURL } = result.user;
-        await upsertUser(uid, displayName ?? "사용자", photoURL);
+        try {
+          await upsertUser(uid, displayName ?? "사용자", photoURL);
+        } catch (e) {
+          console.error("upsertUser 실패 (무시):", e);
+        }
         router.replace("/");
       })
       .catch((e) => {
