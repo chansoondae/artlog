@@ -3,6 +3,7 @@ import { ko } from "date-fns/locale";
 import { Log } from "@/lib/types";
 import { SplitScreenPlayer } from "./SplitScreenPlayer";
 import { LogCard } from "./LogCard";
+import { MergeButton } from "./MergeButton";
 
 interface DayFeedProps {
   dayKey: string;
@@ -20,6 +21,8 @@ export function DayFeed({ dayKey, logs, roomId }: DayFeedProps) {
       </h2>
 
       <SplitScreenPlayer logs={logs} />
+
+      <MergeButton logs={logs} dayKey={dayKey} />
 
       <div className="flex flex-col divide-y divide-zinc-100 dark:divide-zinc-800">
         {logs.map((log) => (
