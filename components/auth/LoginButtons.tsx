@@ -17,8 +17,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 
-function isMobile() {
-  return /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+function useRedirect() {
+  // localhost가 아니면 항상 redirect 사용 (모바일 팝업 차단 방지)
+  if (typeof window === "undefined") return false;
+  return window.location.hostname !== "localhost";
 }
 
 export function LoginButtons() {
@@ -59,7 +61,7 @@ export function LoginButtons() {
     setLoading(true);
     const provider = new GoogleAuthProvider();
     try {
-      if (isMobile()) {
+      if (useRedirect()) {
         await signInWithRedirect(auth, provider);
       } else {
         const result = await signInWithPopup(auth, provider);
