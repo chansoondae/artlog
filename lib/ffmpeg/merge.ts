@@ -47,11 +47,16 @@ export async function mergeClips(
       const fontSize = Math.max(10, Math.floor(w / 12));
 
       if (hasFontFile) {
-        const name = inp.authorName.replace(/[':]/g, "");
+        const name = ("@" + inp.authorName).replace(/[':]/g, "");
         const caption = (inp.caption ?? "").replace(/[':]/g, "");
-        const nameText = `drawtext=text='${name}':fontfile=font.ttf:fontcolor=white:fontsize=${fontSize}:x=8:y=h-${fontSize * 2 + 10}:shadowcolor=black:shadowx=1:shadowy=1`;
+        const nameSize = Math.max(9, Math.floor(w / 16));
+        const captionSize = Math.max(12, Math.floor(w / 8));
+
+        // 좌측 상단 작은 닉네임
+        const nameText = `drawtext=text='${name}':fontfile=font.ttf:fontcolor=white@0.85:fontsize=${nameSize}:x=8:y=8:shadowcolor=black:shadowx=1:shadowy=1`;
+        // 중앙 굵은 감상 (box로 굵기 효과)
         const captionText = caption
-          ? `,drawtext=text='${caption}':fontfile=font.ttf:fontcolor=white@0.85:fontsize=${Math.max(8, fontSize - 2)}:x=8:y=h-${fontSize + 4}:shadowcolor=black:shadowx=1:shadowy=1`
+          ? `,drawtext=text='${caption}':fontfile=font.ttf:fontcolor=white:fontsize=${captionSize}:x=(w-text_w)/2:y=(h-text_h)/2:shadowcolor=black:shadowx=2:shadowy=2:box=1:boxcolor=black@0.3:boxborderw=8`
           : "";
         return `[${i}:v]fps=30,scale=${w}:${h}:force_original_aspect_ratio=decrease,pad=${w}:${h}:(ow-iw)/2:(oh-ih)/2,${nameText}${captionText}[v${i}]`;
       }
