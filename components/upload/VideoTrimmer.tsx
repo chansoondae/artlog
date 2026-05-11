@@ -19,6 +19,7 @@ export function VideoTrimmer({ file, onTrimmed }: VideoTrimmerProps) {
   const [startSec, setStartSec] = useState(0);
   const [status, setStatus] = useState<Status>("ready");
   const [progress, setProgress] = useState(0);
+  const [errorDetail, setErrorDetail] = useState<string | null>(null);
 
   useEffect(() => {
     const url = URL.createObjectURL(file);
@@ -40,18 +41,33 @@ export function VideoTrimmer({ file, onTrimmed }: VideoTrimmerProps) {
 
   async function handleTrim() {
     setProgress(0);
+    setErrorDetail(null);
     setStatus("loading-ffmpeg");
-    await getFFmpeg();
+
+    // ffmpeg 로그 수집
+    let lastLog = "";
+    const ff = await getFFmpeg();
+    const logHandler = ({ message }: { message: string }) => { lastLog = message; };
+    ff.on("log", logHandler);
+
     setStatus("trimming");
     try {
       const blob = await trimTo2Seconds(file, startSec, (p) => setProgress(p));
+      ff.off("log", logHandler);
       setStatus("done");
       setProgress(100);
       onTrimmed(blob);
     } catch (e) {
+      ff.off("log", logHandler);
       console.error(e);
       setStatus("ready");
-      toast.error("트리밍에 실패했습니다. 다른 영상 파일로 시도해보세요.");
+
+      // HEVC 감지
+      const detail = lastLog.includes("hevc") || lastLog.includes("hvc1")
+        ? "HEVC(H.265) 영상은 지원하지 않습니다. 설정 → 카메라 → 포맷을 '가장 호환성 높은'으로 변경 후 촬영해주세요."
+        : lastLog || String(e);
+      setErrorDetail(detail);
+      toast.error("트리밍에 실패했습니다.");
     }
   }
 
@@ -92,6 +108,12 @@ export function VideoTrimmer({ file, onTrimmed }: VideoTrimmerProps) {
             className="bg-zinc-900 dark:bg-zinc-50 h-1.5 rounded-full transition-all"
             style={{ width: `${progress}%` }}
           />
+        </div>
+      )}
+
+      {errorDetail && (
+        <div className="text-xs text-red-500 bg-red-50 dark:bg-red-950 rounded-lg px-3 py-2 leading-relaxed">
+          {errorDetail}
         </div>
       )}
 
