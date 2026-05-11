@@ -1,12 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   GoogleAuthProvider,
   signInWithPopup,
-  signInWithRedirect,
-  getRedirectResult,
   signInAnonymously,
   updateProfile,
 } from "firebase/auth";
@@ -17,16 +15,10 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 
-function shouldUseRedirect() {
-  if (typeof window === "undefined") return false;
-  return window.location.hostname !== "localhost";
-}
-
 export function LoginButtons() {
   const router = useRouter();
   const [nickname, setNickname] = useState("");
   const [showNicknameInput, setShowNicknameInput] = useState(false);
-  const [redirectPending, setRedirectPending] = useState(false);
 
   async function upsertUser(uid: string, displayName: string, photoURL: string | null) {
     await setDoc(
@@ -36,38 +28,17 @@ export function LoginButtons() {
     );
   }
 
-  // redirect 후 돌아왔을 때 결과 처리
-  useEffect(() => {
-    getRedirectResult(auth)
-      .then(async (result) => {
-        if (!result) return;
-        setRedirectPending(true);
-        const { uid, displayName, photoURL } = result.user;
-        try {
-          await upsertUser(uid, displayName ?? "사용자", photoURL);
-        } catch (e) {
-          console.error("upsertUser 실패 (무시):", e);
-        }
-        router.replace("/");
-      })
-      .catch((e) => {
-        console.error("[Auth] getRedirectResult 에러:", e);
-        toast.error("구글 로그인에 실패했습니다.");
-      });
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
   async function handleGoogle() {
     const provider = new GoogleAuthProvider();
     try {
-      if (shouldUseRedirect()) {
-        await signInWithRedirect(auth, provider);
-      } else {
-        const result = await signInWithPopup(auth, provider);
-        const { uid, displayName, photoURL } = result.user;
+      const result = await signInWithPopup(auth, provider);
+      const { uid, displayName, photoURL } = result.user;
+      try {
         await upsertUser(uid, displayName ?? "사용자", photoURL);
-        router.replace("/");
+      } catch (e) {
+        console.error("upsertUser 실패 (무시):", e);
       }
+      router.replace("/");
     } catch (e) {
       toast.error("구글 로그인에 실패했습니다.");
       console.error(e);
@@ -90,10 +61,6 @@ export function LoginButtons() {
       console.error(e);
     }
   }
-
-  if (redirectPending) return (
-    <p className="text-sm text-zinc-400">로그인 중...</p>
-  );
 
   return (
     <div className="flex flex-col gap-4 w-full max-w-xs">
