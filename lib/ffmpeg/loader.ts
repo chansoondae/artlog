@@ -10,6 +10,7 @@ export async function getFFmpeg(): Promise<FFmpeg> {
 
   loadPromise = (async () => {
     const instance = new FFmpeg();
+    instance.on("log", ({ message }) => console.log("[ffmpeg]", message));
     const baseURL = "https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd";
     await instance.load({
       coreURL: await toBlobURL(`${baseURL}/ffmpeg-core.js`, "text/javascript"),

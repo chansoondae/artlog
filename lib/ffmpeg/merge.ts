@@ -52,7 +52,7 @@ export async function mergeClips(
 
   const inputArgs = inputs.flatMap((_, i) => ["-i", `clip${i}.mp4`]);
 
-  await ff.exec([
+  const cmd = [
     ...inputArgs,
     "-filter_complex", filterComplex,
     "-map", "[out]",
@@ -63,7 +63,11 @@ export async function mergeClips(
     "-movflags", "+faststart",
     "-an",
     "merged.mp4",
-  ]);
+  ];
+  console.log("[merge] ffmpeg cmd:", cmd.join(" "));
+
+  const ret = await ff.exec(cmd);
+  console.log("[merge] ffmpeg 반환값:", ret);
 
   const data = await ff.readFile("merged.mp4");
 
