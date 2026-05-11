@@ -24,11 +24,11 @@ export async function mergeClips(
 
   const n = inputs.length;
 
-  // 각 클립 다운로드 (CORS 우회: fetch → blob → ArrayBuffer)
+  // 각 클립 다운로드 (API 프록시를 통해 CORS 우회)
   for (let i = 0; i < n; i++) {
-    const res = await fetch(inputs[i].url);
-    const blob = await res.blob();
-    const arrayBuffer = await blob.arrayBuffer();
+    const proxyUrl = `/api/proxy?url=${encodeURIComponent(inputs[i].url)}`;
+    const res = await fetch(proxyUrl);
+    const arrayBuffer = await res.arrayBuffer();
     await ff.writeFile(`clip${i}.mp4`, new Uint8Array(arrayBuffer));
     onProgress?.(Math.round((i + 1) / n * 20));
   }
