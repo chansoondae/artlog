@@ -13,12 +13,11 @@ import {
 import { doc, setDoc, serverTimestamp } from "firebase/firestore";
 import { auth, db } from "@/lib/firebase";
 import { COLLECTIONS } from "@/lib/constants";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 
-function useRedirect() {
-  // localhost가 아니면 항상 redirect 사용 (모바일 팝업 차단 방지)
+function shouldUseRedirect() {
   if (typeof window === "undefined") return false;
   return window.location.hostname !== "localhost";
 }
@@ -27,7 +26,7 @@ export function LoginButtons() {
   const router = useRouter();
   const [nickname, setNickname] = useState("");
   const [showNicknameInput, setShowNicknameInput] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const [redirectPending, setRedirectPending] = useState(false);
 
   async function upsertUser(uid: string, displayName: string, photoURL: string | null) {
     await setDoc(
@@ -39,11 +38,10 @@ export function LoginButtons() {
 
   // redirect 후 돌아왔을 때 결과 처리
   useEffect(() => {
-    console.log("[Auth] getRedirectResult 시작");
     getRedirectResult(auth)
       .then(async (result) => {
-        console.log("[Auth] getRedirectResult 결과:", result);
         if (!result) return;
+        setRedirectPending(true);
         const { uid, displayName, photoURL } = result.user;
         try {
           await upsertUser(uid, displayName ?? "사용자", photoURL);
@@ -60,14 +58,10 @@ export function LoginButtons() {
   }, []);
 
   async function handleGoogle() {
-    setLoading(true);
     const provider = new GoogleAuthProvider();
     try {
-      console.log("[Auth] useRedirect:", useRedirect(), "hostname:", window.location.hostname);
-      if (useRedirect()) {
-        console.log("[Auth] signInWithRedirect 호출");
+      if (shouldUseRedirect()) {
         await signInWithRedirect(auth, provider);
-        console.log("[Auth] signInWithRedirect 완료 (이 줄이 보이면 redirect 안 됨)");
       } else {
         const result = await signInWithPopup(auth, provider);
         const { uid, displayName, photoURL } = result.user;
@@ -77,8 +71,6 @@ export function LoginButtons() {
     } catch (e) {
       toast.error("구글 로그인에 실패했습니다.");
       console.error(e);
-    } finally {
-      setLoading(false);
     }
   }
 
@@ -87,36 +79,36 @@ export function LoginButtons() {
       toast.error("닉네임을 입력해주세요.");
       return;
     }
-    setLoading(true);
     try {
       const result = await signInAnonymously(auth);
       await updateProfile(result.user, { displayName: nickname.trim() });
-      await result.user.getIdToken(true); // 토큰 강제 갱신
+      await result.user.getIdToken(true);
       await upsertUser(result.user.uid, nickname.trim(), null);
       router.replace("/");
     } catch (e) {
       toast.error("로그인에 실패했습니다.");
       console.error(e);
-    } finally {
-      setLoading(false);
     }
   }
+
+  if (redirectPending) return (
+    <p className="text-sm text-zinc-400">로그인 중...</p>
+  );
 
   return (
     <div className="flex flex-col gap-4 w-full max-w-xs">
       <button
         type="button"
-        onClick={() => { console.log("[Auth] 버튼 클릭됨"); handleGoogle(); }}
-        disabled={loading}
-        className="w-full h-12 rounded-lg border border-zinc-300 bg-white text-sm font-medium text-zinc-900"
+        onClick={handleGoogle}
+        className="w-full h-12 rounded-lg border border-zinc-300 bg-white text-sm font-medium text-zinc-900 hover:bg-zinc-50"
       >
-        {loading ? "로그인 중..." : "구글로 시작하기"}
+        구글로 시작하기
       </button>
 
       {!showNicknameInput ? (
         <Button
+          type="button"
           onClick={() => setShowNicknameInput(true)}
-          disabled={loading}
           variant="ghost"
           className="w-full h-12 text-base text-zinc-500"
         >
@@ -132,8 +124,8 @@ export function LoginButtons() {
             className="h-12 text-base"
             autoFocus
           />
-          <Button onClick={handleAnonymous} disabled={loading || !nickname.trim()} className="w-full h-12 text-base">
-            {loading ? "로그인 중..." : "시작하기"}
+          <Button type="button" onClick={handleAnonymous} disabled={!nickname.trim()} className="w-full h-12 text-base">
+            시작하기
           </Button>
         </div>
       )}
