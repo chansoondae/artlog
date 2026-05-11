@@ -23,7 +23,7 @@ export function ClipPreview({ blob }: ClipPreviewProps) {
         controls
         playsInline
         loop
-        className="w-full rounded-xl bg-black aspect-video"
+        className="w-full rounded-xl bg-black aspect-[9/16]"
       />
     </div>
   );

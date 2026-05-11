@@ -97,7 +97,7 @@ export function VideoTrimmer({ file, onTrimmed }: VideoTrimmerProps) {
         muted
         playsInline
         controls
-        className="w-full rounded-xl bg-black aspect-video"
+        className="w-full rounded-xl bg-black aspect-[9/16]"
       />
 
       {duration > 0 && (

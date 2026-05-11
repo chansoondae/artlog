@@ -44,7 +44,7 @@ export function SplitScreenPlayer({ logs }: SplitScreenPlayerProps) {
     <div className="flex flex-col gap-3">
       <div className={`grid ${gridClass} gap-1 rounded-xl overflow-hidden bg-black`}>
         {logs.map((log, i) => (
-          <div key={log.id} className="relative aspect-video bg-zinc-900">
+          <div key={log.id} className="relative aspect-[9/16] bg-zinc-900">
             {error.includes(i) ? (
               <div className="absolute inset-0 flex items-center justify-center text-zinc-600 text-xs">
                 재생 불가
