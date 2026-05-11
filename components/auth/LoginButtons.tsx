@@ -81,6 +81,7 @@ export function LoginButtons() {
     try {
       const result = await signInAnonymously(auth);
       await updateProfile(result.user, { displayName: nickname.trim() });
+      await result.user.getIdToken(true); // 토큰 강제 갱신
       await upsertUser(result.user.uid, nickname.trim(), null);
       router.replace("/");
     } catch (e) {
