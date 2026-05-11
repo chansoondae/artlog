@@ -40,7 +40,7 @@ export async function mergeClips(
 
   // xstack / vstack 필터 생성
   const filterInputs = inputs
-    .map((_, i) => `[${i}:v]scale=${w}:${h}:force_original_aspect_ratio=decrease,pad=${w}:${h}:(ow-iw)/2:(oh-ih)/2[v${i}]`)
+    .map((_, i) => `[${i}:v]fps=30,scale=${w}:${h}:force_original_aspect_ratio=decrease,pad=${w}:${h}:(ow-iw)/2:(oh-ih)/2[v${i}]`)
     .join("; ");
 
   const stackInputs = inputs.map((_, i) => `[v${i}]`).join("");
@@ -57,6 +57,7 @@ export async function mergeClips(
     "-filter_complex", filterComplex,
     "-map", "[out]",
     "-t", "2",
+    "-r", "30",
     "-c:v", "libx264",
     "-preset", "ultrafast",
     "-crf", "28",
