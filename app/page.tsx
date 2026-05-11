@@ -3,8 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { collection, query, where, onSnapshot } from "firebase/firestore";
-import { signOut } from "firebase/auth";
-import { auth, db } from "@/lib/firebase";
+import { db } from "@/lib/firebase";
 import { COLLECTIONS } from "@/lib/constants";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { RoomCard } from "@/components/room/RoomCard";
@@ -41,12 +40,11 @@ export default function Home() {
     <div className="flex min-h-screen flex-col bg-zinc-50 dark:bg-black">
       <header className="flex items-center justify-between px-4 h-14 border-b border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900">
         <h1 className="text-lg font-bold text-zinc-900 dark:text-zinc-50">ArtLog</h1>
-        <div className="flex items-center gap-2">
-          <span className="text-sm text-zinc-500 hidden sm:block">{user.displayName}</span>
-          <Button variant="ghost" size="sm" onClick={() => signOut(auth).then(() => router.replace("/login"))}>
-            로그아웃
+        <Link href="/profile">
+          <Button variant="ghost" size="sm" className="text-sm text-zinc-500">
+            {user.displayName ?? "프로필"}
           </Button>
-        </div>
+        </Link>
       </header>
 
       <main className="flex flex-col gap-6 px-4 py-6 max-w-md mx-auto w-full">
